@@ -50,7 +50,7 @@ RUN apt-get update \
     && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 RUN apt-get update \
-    && apt-get install -y git nodejs npm composer nano tree sudo dnsmasq dnsutils supervisor iputils-ping unzip \
+    && apt-get install -y git nano tree sudo dnsmasq dnsutils supervisor iputils-ping unzip \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN mkdir -p /var/log/supervisor
@@ -72,6 +72,17 @@ WORKDIR /usr/bin
 #RUN curl -O https://chromedriver.storage.googleapis.com/2.30/chromedriver_linux64.zip
 #RUN unzip chromedriver_linux64.zip
 #RUN chmod +x chromedriver
+
+#INSTALL NPM
+
+RUN apt-get update && apt-get install -y php7.0-mbstring php7.0-zip && apt-get clean && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | bash \
+            && . /root/.nvm/nvm.sh \
+            && nvm install stable \
+            && nvm use stable \
+            && nvm alias stable \
+            && npm install -g webpack yarn && npm cache clean
 
 # COPY SCRIPTS
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
