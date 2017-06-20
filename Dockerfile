@@ -77,12 +77,16 @@ WORKDIR /usr/bin
 
 RUN apt-get update && apt-get install -y php7.0-mbstring php7.0-zip && apt-get clean && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+ENV NVM_DIR /root/.nvm
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | bash \
-            && . /root/.nvm/nvm.sh \
+            && . $NVM_DIR/nvm.sh \
             && nvm install stable \
             && nvm use stable \
-            && nvm alias stable \
-            && npm install -g webpack yarn && npm cache clean
+            && nvm alias stable
+
+RUN echo "" >> ~/.bashrc && \
+    echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc && \
+    echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' >> ~/.bashrc
 
 # COPY SCRIPTS
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
