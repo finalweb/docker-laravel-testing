@@ -7,8 +7,11 @@
 #sudo service dnsmasq restart
 
 # SET THE DOCUMENT ROOT
-sed -i -- "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/public/ig" /etc/apache2/sites-enabled/000-default.conf
-
+if [ "$CI_ENV" = true ] ; then
+    sed -i -- "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www-ci\/public/ig" /etc/apache2/sites-enabled/000-default.conf
+else
+    sed -i -- "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/public/ig" /etc/apache2/sites-enabled/000-default.conf
+fi
 # Some apache tweaks
 sed -i 's/AllowOverride\ None/AllowOverride\ All/g' /etc/apache2/apache2.conf
 
