@@ -81,6 +81,7 @@ ENV NVM_DIR /root/.nvm
 RUN curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.1/install.sh | bash \
             && . $NVM_DIR/nvm.sh \
             && nvm install stable \
+            && nvm install 7.5 \
             && nvm use stable \
             && nvm alias stable
 
@@ -88,13 +89,10 @@ RUN echo "" >> ~/.bashrc && \
     echo 'export NVM_DIR="$HOME/.nvm"' >> ~/.bashrc && \
     echo '[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm' >> ~/.bashrc
 
-# COPY SCRIPTS
-COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
-COPY . /usr/sbin
-RUN chmod +x /usr/sbin/entry_point.sh
-RUN chmod +x /usr/sbin/docker-php-ext-enable
-
-RUN /usr/sbin/docker-php-ext-enable pdo_sqlsrv sqlsrv
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add - \
+    && echo "deb https://dl.yarnpkg.com/debian/ stable main" | sudo tee /etc/apt/sources.list.d/yarn.list \
+    && sudo apt-get update && sudo apt-get install yarn -y \
+    && apt-get clean && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
 VOLUME /var/www
 
@@ -102,12 +100,15 @@ VOLUME /dev/shm
 
 WORKDIR /var/www
 
-EXPOSE 80
+EXPOSE 80 9515 5900 3306
 
-EXPOSE 9515
-
-EXPOSE 5900
-
-EXPOSE 3306
+# COPY SCRIPTS
+COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+COPY . /usr/sbin
+RUN chmod +x /usr/sbin/docker-php-ext-enable
+RUN /usr/sbin/docker-php-ext-enable pdo_sqlsrv sqlsrv
+RUN chmod +x /usr/sbin/entry_point.sh
+COPY entry_point.sh /usr/bin/boot_services
+RUN chmod +x /usr/bin/boot_services
 
 CMD ["/bin/sh", "-c", "/usr/sbin/entry_point.sh > /var/www/boot.log"]

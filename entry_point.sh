@@ -7,20 +7,27 @@
 #sudo service dnsmasq restart
 
 # SET THE DOCUMENT ROOT
-if [ "$CI_ENV" = true ] ; then
+if [ "$CI" = "true" ]; then
     sed -i -- "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www-ci\/public/ig" /etc/apache2/sites-enabled/000-default.conf
+    sed -i 's/Directory \/var\/www\//Directory \/var\/www-ci\//g' /etc/apache2/apache2.conf
 else
     sed -i -- "s/DocumentRoot \/var\/www\/html/DocumentRoot \/var\/www\/public/ig" /etc/apache2/sites-enabled/000-default.conf
 fi
 # Some apache tweaks
 sed -i 's/AllowOverride\ None/AllowOverride\ All/g' /etc/apache2/apache2.conf
 
+#allow remote mysql connections
+sed -i 's/^bind-address.*$/bind-address = 0\.0\.0\.0/g' /etc/mysql/mariadb.conf.d/50-server.cnf
+
 sudo a2enmod rewrite
 
 #start mariadb
 service mysql start
 
-mysql -u root -proot <<-EOF
+#let mysql boot
+sleep 2
+
+mysql -uroot -proot <<-EOF
 use mysql;
 DELETE FROM mysql.user WHERE User='root';
 INSERT INTO mysql.user (Host, User, Password) VALUES ('%', 'root', password('root'));
@@ -29,7 +36,7 @@ FLUSH privileges;
 exit
 EOF
 
-mysql -u root -proot -e "CREATE DATABASE IF NOT EXISTS fw2; CREATE DATABASE IF NOT EXISTS fw2testing;"
+mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS fw2; CREATE DATABASE IF NOT EXISTS fw2testing;"
 
 #start apache
 service apache2 start
@@ -51,4 +58,10 @@ x11vnc -storepasswd laravel /usr/sbin/vncpasswd
 
 /usr/bin/supervisord
 
-tail -f /dev/null
+echo "$(sed '1i nameserver 127.0.0.1' /etc/resolv.conf)" > /etc/resolv.conf
+
+if [ "$CI" = "true" ]; then
+    echo "done booting"
+else
+    tail -f /dev/null
+fi
