@@ -1,0 +1,93 @@
+FROM ubuntu:bionic
+
+ARG DEBIAN_FRONTEND=noninteractive
+
+# Upgrade the ubuntu image
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install PHP
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y \
+    php-pear \
+    php-fpm \
+    php-dev \
+    php-zip \
+    php-curl \
+    php-xmlrpc \
+    php-gd \
+    php-mysql \
+    php-mbstring \
+    php-xml \
+    libapache2-mod-php \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN apt-get update \
+    && apt-get upgrade -y \
+    && apt-get install -y apache2 git \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN apt-get update \
+    && apt-get install mariadb-common mariadb-server mariadb-client -y \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+RUN apt-get update \
+    && apt-get install -y git nano tree sudo dnsmasq dnsutils supervisor iputils-ping unzip \
+    && apt-get clean \
+    && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+RUN mkdir -p /var/log/supervisor
+RUN sudo /bin/su -c "echo \"user=root\" >> /etc/dnsmasq.conf"
+
+ENV COMPOSER_HOME /usr/local/share/composer
+ENV COMPOSER_ALLOW_SUPERUSER 1
+ENV PATH "$COMPOSER_HOME:$COMPOSER_HOME/vendor/bin:$PATH"
+RUN \
+  mkdir -pv $COMPOSER_HOME && chmod -R g+w $COMPOSER_HOME \
+  && curl -o /tmp/composer-setup.php https://getcomposer.org/installer \
+  && curl -o /tmp/composer-setup.sig https://composer.github.io/installer.sig \
+  && php -r "if (hash('SHA384', file_get_contents('/tmp/composer-setup.php')) \
+    !== trim(file_get_contents('/tmp/composer-setup.sig'))) { unlink('/tmp/composer-setup.php'); \
+    echo 'Invalid installer' . PHP_EOL; exit(1); }" \
+  && php /tmp/composer-setup.php --filename=composer --install-dir=$COMPOSER_HOME
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ca-certificates socat \
+    && apt-get install -y --no-install-recommends xvfb x11vnc fluxbox xterm \
+    && apt-get clean && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+# Install MSSQL for PHP
+RUN \
+    #####################################
+    # Ref from https://github.com/Microsoft/msphpsql/wiki/Dockerfile-for-adding-pdo_sqlsrv-and-sqlsrv-to-official-php-image
+    #####################################
+    # Add Microsoft repo for Microsoft ODBC Driver 13 for Linux
+    apt-get update -yqq && apt-get install -y apt-transport-https libcurl3 \
+        && curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - \
+        && curl https://packages.microsoft.com/config/debian/8/prod.list > /etc/apt/sources.list.d/mssql-release.list \
+        && apt-get update -yqq \
+
+    # Install Dependencies
+        && ACCEPT_EULA=Y apt-get install -y unixodbc unixodbc-dev libgss3 odbcinst msodbcsql locales \
+        && echo "en_US.UTF-8 UTF-8" > /etc/locale.gen && locale-gen \
+
+    # Install pdo_sqlsrv and sqlsrv from PECL. Replace pdo_sqlsrv-4.1.8preview with preferred version.
+        && pecl install pdo_sqlsrv-4.1.8preview sqlsrv-4.1.8preview \
+        && apt-get clean \
+        && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
+
+VOLUME /var/www/html
+
+WORKDIR /usr/bin
+
+ADD startup.sh /usr/sbin
+RUN chmod +x /usr/sbin/startup.sh
+
+WORKDIR /var/www/html
+
+CMD ["/bin/sh", "-c", "/usr/sbin/startup.sh > /var/www/boot.log"]

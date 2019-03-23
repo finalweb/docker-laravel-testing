@@ -93,11 +93,11 @@ for module in $modules; do
 		continue
 	fi
 
-	ini="/etc/php/7.0/fpm/conf.d/${iniName:-"docker-php-ext-$ext.ini"}"
+	ini="/etc/php/7.2/apache2/conf.d/${iniName:-"docker-php-ext-$ext.ini"}"
 	if ! grep -q "$line" "$ini" 2>/dev/null; then
 		echo "$line" >> "$ini"
 	fi
-	ini="/etc/php/7.0/cli/conf.d/${iniName:-"docker-php-ext-$ext.ini"}"
+	ini="/etc/php/7.2/cli/conf.d/${iniName:-"docker-php-ext-$ext.ini"}"
     if ! grep -q "$line" "$ini" 2>/dev/null; then
         echo "$line" >> "$ini"
     fi

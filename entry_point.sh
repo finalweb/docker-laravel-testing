@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#sudo /bin/su -c "echo \"address=/dev/172.0.0.1\" >> /etc/dnsmasq.conf"
+#sudo /bin/su -c "echo \"address=/localhost/172.0.0.1\" >> /etc/dnsmasq.conf"
 #sudo /bin/su -c "echo \"server=8.8.8.8\" >> /etc/dnsmasq.conf"
 #sudo /bin/su -c "echo \"server=8.8.4.4\" >> /etc/dnsmasq.conf"
 
@@ -46,7 +46,7 @@ if [ "$lastline" == "server=8.8.4.4" ]; then
     echo "$(head -n -3 /etc/dnsmasq.conf)" > /etc/dnsmasq.conf
 fi
 
-sudo /bin/su -c "echo \"address=/dev/127.0.0.1\" >> /etc/dnsmasq.conf"
+sudo /bin/su -c "echo \"address=/localhost/127.0.0.1\" >> /etc/dnsmasq.conf"
 sudo /bin/su -c "echo \"server=8.8.8.8\" >> /etc/dnsmasq.conf"
 sudo /bin/su -c "echo \"server=8.8.4.4\" >> /etc/dnsmasq.conf"
 
