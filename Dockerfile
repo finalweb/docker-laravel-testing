@@ -45,7 +45,7 @@ RUN apt-get update \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 RUN apt-get update \
-    && apt-get install mariadb-common mariadb-server mariadb-client -y \
+    && apt-get install mysql-common mysql-server mysql-client -y \
     && apt-get clean \
     && rm -fr /var/lib/apt/lists/* /tmp/* /var/tmp/*
 
