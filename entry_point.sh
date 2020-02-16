@@ -30,7 +30,7 @@ sleep 2
 mysql -uroot -proot <<-EOF
 use mysql;
 DELETE FROM mysql.user WHERE User='root';
-INSERT INTO mysql.user (Host, User, Password) VALUES ('%', 'root', password('root'));
+INSERT INTO mysql.user (Host, User, authentication_string) VALUES ('%', 'root', password('root'));
 GRANT ALL ON *.* TO 'root'@'%' WITH GRANT OPTION;
 FLUSH privileges;
 exit
